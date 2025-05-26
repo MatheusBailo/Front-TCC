@@ -1,33 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect} from 'react';
+import {api} from './api/api'
+import './app.module.css'
+import { useNavigate } from 'react-router'
+
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  const navigate = useNavigate();
+
+  const[email, setEmail] = useState('')
+  const[password, setPassword] = useState('')
+  const[user, setUser] = useState(null)
+  const[message, setMessage] = useState('')
+
+
+  useEffect(() =>{
+      const storedUser = localStorage.getItem('user')
+      if(storedUser){
+        setUser(JSON.parse(storedUser))
+        navigate('/userList')
+      }
+  },[navigate])
+
+  const handleLogin = async(e) =>{
+    e.preventDefault()
+    try {
+      const response = await api.post('/login', {email, password})
+      const user = response.data
+
+      localStorage.setItem('user', JSON.stringify(user))
+      setUser(user)
+      navigate('/userList')
+      
+    } catch (error) {
+      setMessage('Erro no login' + (error.response?.data?.message || 'verefique os dados'))
+    }
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div style={{padding: '2rem'}}>
+        <form onSubmit={handleLogin}>
+        <h2>Login</h2>
+        <input type="email" placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)}required/>
+        <input type="password" placeholder='Senha' value={password} onChange={(e) => setPassword(e.target.value)}required/>
+        <button type='submit'>Entrar</button>
+        <p>{message}</p>
+        </form>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
